@@ -1,0 +1,12 @@
+.TRAViz-copyright-link {
+	z-index: 100;
+	position: relative;
+	margin-top: -60px;
+	float: right;
+}
+
+.TRAViz-copyright {
+	width: 232px;
+	height: 50px;
+	background-image: url(images/cr.png);
+}

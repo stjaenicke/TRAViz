@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Canonical Path List</title>
+    <script src="../../traviz-min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../traviz.css"></link>
+    <script src="data.js"></script>
+    <style type="text/css" media="screen">
+        body { font-family: 'Georgia'; }
+    </style>
+  </head>
+  <body>
+<h1 style="text-align:center;">Canonical Path List</h1>
+    <div id="containerDiv"></div>
+    <script type="text/javascript">
+	var traviz = new TRAViz("containerDiv",{
+		normalize: false,
+		lineBreaks: false,
+		startAndEnd: false,
+		connectionType: 'joined',
+		interpolateFontSize: true
+	});
+	var pathData = [];
+	for( var i=0; i<paths.length; i++ ){
+		pathData.push({
+			edition: i,
+			text: paths[i]
+		});
+	}
+	traviz.align(pathData);
+	traviz.visualize();
+    </script>
+  </body>
+</html>

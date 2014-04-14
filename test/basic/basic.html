@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <title>Basic Example</title>
+    <script src="../../traviz-min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../traviz.css"></link>
+  </head>  
+  <body>
+    <div id="containerDiv"></div>
+    <script type="text/javascript">
+	var traviz = new TRAViz("containerDiv",{
+		lineBreaks: false
+	});
+	traviz.align([{
+		edition: 'Edition 1',
+		text: 'Thank You very much for thinking about using this library'
+	},{
+		edition: 'Edition 2',
+		text: 'I thank You for downloading this library'
+	},{
+		edition: 'Edition 3',
+		text: 'Thank You a lot for using this library'
+	},{
+		edition: 'Edition 4',
+		text: 'Thanks a lot for watching this example'
+	},{
+		edition: 'Edition 5',
+		text: 'Thanks for downloading and thinking about using this library'
+	}]);
+	traviz.visualize();
+    </script>
+  </body>
+</html>

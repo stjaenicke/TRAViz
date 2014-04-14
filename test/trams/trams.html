@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Leipzig Tram System</title>
+    <script src="../../traviz-min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../traviz.css"></link>
+    <script src="data.js"></script>
+    <style type="text/css" media="screen">
+        body { font-family: 'Georgia'; }
+    </style>
+  </head>
+  <body>
+<h1 style="text-align:center;">Leipzig Tram System</h1>
+    <div id="containerDiv"></div>
+    <script type="text/javascript">
+	var traviz = new TRAViz("containerDiv",{
+		normalize: false,
+		lineBreaks: false,
+		startAndEnd: false,
+		colors: tramColors
+	});
+	var tramData = [];
+	for( var i=0; i<trams.length; i++ ){
+		tramData.push({
+			edition: trams[i],
+			text: stations[i]
+		});
+	}
+	traviz.align(tramData);
+	traviz.visualize();
+	for( var i=0; i<traviz.vertices.length; i++ ){
+		traviz.vertices[i].token.replace(/_/g, " ");
+		traviz.vertices[i].textNode.attr({ text: traviz.vertices[i].token });
+	}
+	for( var i=0; i<traviz.sentencePaths.length; i++ ){
+		traviz.sentencePaths[i][1].textNode.attr({ 'font-size': '24px' });
+		traviz.sentencePaths[i][1].rect.attr({ 'fill': 'none' });
+		traviz.sentencePaths[i][traviz.sentencePaths[i].length-2].textNode.attr({ 'font-size': '24px' });
+		traviz.sentencePaths[i][traviz.sentencePaths[i].length-2].rect.attr({ 'fill': 'none' });
+	}
+    </script>
+  </body>
+</html>

@@ -1,0 +1,105 @@
+body {
+	font-family: 'Georgia';
+	margin: 0px;
+}
+
+.topLeft {
+	width: 400px;
+	height: 520px;
+	background-image: url(images/tl.jpg);
+}
+
+.top {
+	display: block;
+	height: 520px;
+	background-image: url(images/t.jpg);
+}
+
+.topRight {
+	width: 400px;
+	height: 520px;
+	background-image: url(images/tr.jpg);
+}
+
+.bottomLeft {
+	width: 400px;
+	height: 499px;
+	background-image: url(images/bl.jpg);
+}
+
+.bottom {
+	display: block;
+	height: 499px;
+	background-image: url(images/b.jpg);
+}
+
+.bottomRight {
+	width: 400px;
+	height: 499px;
+	background-image: url(images/br.jpg);
+}
+
+.left {
+	background-image: url(images/l.jpg);
+}
+
+.center {
+	background-image: url(images/c.jpg);
+}
+
+.right {
+	background-image: url(images/r.jpg);
+}
+
+.bibleBg {
+	position: absolute;
+	width: 100%;	
+}
+
+.icon {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	padding: 3px;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.iconLabel {
+	display: inline-block;
+	height: 14px;
+	color: #ddd;
+	vertical-align: middle;
+	padding: 0px 15px 0px 5px;
+	cursor: pointer;
+	font-size: 12px;
+}
+
+table {
+	border-spacing:0px;
+	border-collapse:collapse;
+}
+
+td {
+    border: 0px;
+    padding: 0px;
+}
+
+.header {
+	padding-top: 60px;
+	padding-bottom: 20px;
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.container {
+	text-align: center;
+	position: relative;
+}
+
+.contentpanel {
+	table-layout: fixed;
+	width: 100%;	
+	border-spacing:0;
+	border-collapse:collapse;
+}
