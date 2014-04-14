@@ -12,13 +12,3 @@ TRAViz is a JavaScript library that was developed within the Digital Humanities 
 * visualize the alignment
 * improve the readability for Text Variant Graphs compared to other approaches
 * interact with the graph to discover how individual editions disseminate
-
-## TRAViz Homepage
-
-You can find a tutorial, examples, projects using TRAViz, license information and contact details on the TRAViz homepage: http://vizcovery.org/traviz/
-
-**If you are using GeoTemCo within your project, we kindly ask you to send us some details, so that we can keep our Projects page up-to-date.**
-
-## License
-
-TRAViz is licensed under the latest Version of the Fair Academic License (FAL). Please read the License Terms carefully (http://vizcovery.org/traviz/source.html)! More information about FAL can be found under http://vizcovery.org/fal.html.
