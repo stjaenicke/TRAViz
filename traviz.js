@@ -8474,7 +8474,7 @@ TRAViz.prototype.visualize = function(){
 		var sizes = [ 12, 17, 23, 30, 38, 47, 57 ];
 		for( j; j<k; j++ ){
 			var v = paths[i][j];
-			var fs = 10 + 4*v.count;
+			var fs = this.config.options.fontSizeMin + this.config.options.fontSizeIncrease*(v.count-1);
 			if( this.config.options.interpolateFontSize ){
 				fs = this.config.options.fontSizeMin + (v.count-1)/(maxLabel-1) * (this.config.options.fontSizeMax - this.config.options.fontSizeMin);
 			}
@@ -8721,7 +8721,7 @@ TRAViz.prototype.visualize = function(){
 			}
 		}
 		if( v.count > this.config.options.collapseLabels ){
-			var fs = 10 + 4*v.count;
+			var fs = this.config.options.fontSizeMin + this.config.options.fontSizeIncrease*(v.count-1);
 			if( this.config.options.interpolateFontSize ){
 				fs = this.config.options.fontSizeMin + (v.count-1)/(maxLabel-1) * (this.config.options.fontSizeMax - this.config.options.fontSizeMin);
 			}
@@ -8820,6 +8820,7 @@ function TRAVizConfig(options) {
 		interpolateFontSize: false, // if true, the font size of the vertices is interpolated between 'fontSizeMin' and 'fontSizeMax'
 		fontSizeMin: 10, // minimum font size
 		fontSizeMax: 50, // maximum font size
+		fontSizeIncrease: 4, // the number of pixels the labels grow by edition if interpolateFontSize = false
 		
 		/* Connections */
 		edgeGap: 5, // minimum gap between two connections; required when adjusting the connections horizontally and vertically		

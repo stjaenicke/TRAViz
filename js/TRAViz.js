@@ -1744,7 +1744,7 @@ TRAViz.prototype.visualize = function(){
 		var sizes = [ 12, 17, 23, 30, 38, 47, 57 ];
 		for( j; j<k; j++ ){
 			var v = paths[i][j];
-			var fs = 10 + 4*v.count;
+			var fs = this.config.options.fontSizeMin + this.config.options.fontSizeIncrease*(v.count-1);
 			if( this.config.options.interpolateFontSize ){
 				fs = this.config.options.fontSizeMin + (v.count-1)/(maxLabel-1) * (this.config.options.fontSizeMax - this.config.options.fontSizeMin);
 			}
@@ -1991,7 +1991,7 @@ TRAViz.prototype.visualize = function(){
 			}
 		}
 		if( v.count > this.config.options.collapseLabels ){
-			var fs = 10 + 4*v.count;
+			var fs = this.config.options.fontSizeMin + this.config.options.fontSizeIncrease*(v.count-1);
 			if( this.config.options.interpolateFontSize ){
 				fs = this.config.options.fontSizeMin + (v.count-1)/(maxLabel-1) * (this.config.options.fontSizeMax - this.config.options.fontSizeMin);
 			}

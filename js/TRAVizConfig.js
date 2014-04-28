@@ -64,6 +64,7 @@ function TRAVizConfig(options) {
 		interpolateFontSize: false, // if true, the font size of the vertices is interpolated between 'fontSizeMin' and 'fontSizeMax'
 		fontSizeMin: 10, // minimum font size
 		fontSizeMax: 50, // maximum font size
+		fontSizeIncrease: 4, // the number of pixels the labels grow by edition if interpolateFontSize = false
 		
 		/* Connections */
 		edgeGap: 5, // minimum gap between two connections; required when adjusting the connections horizontally and vertically		

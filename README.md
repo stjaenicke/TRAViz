@@ -13,6 +13,14 @@ TRAViz is a JavaScript library that was developed within the Digital Humanities 
 * improve the readability for Text Variant Graphs compared to other approaches
 * interact with the graph to discover how individual editions disseminate
 
+## License
+
+TRAViz is licensed under the latest Version of the Fair Academic License (FAL). 
+
+FAL for TRAViz: http://www.traviz.vizcovery.org/source.html
+
+More information about FAL can be found under http://www.vizcovery.org/fal.html.
+
 ## Homepage
 
 http://www.traviz.vizcovery.org/
