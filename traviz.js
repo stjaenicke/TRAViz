@@ -7513,6 +7513,7 @@ TRAViz.prototype.transformEdgeTypes = function(){
 				c.type = 1;
 				this.removeVertical(c.links[2]);
 				var vc = c.links[0];
+				vc.type = "source";
 				var medl = (vc.v1.layer + vc.v2.layer)/2;
 				if( vc.v1.layer < medl ){
 					vc.y1 = y1 + this.curveRadius;
@@ -7536,6 +7537,7 @@ TRAViz.prototype.transformEdgeTypes = function(){
 				c.type = 1;
 				this.removeVertical(c.links[0]);
 				var vc = c.links[2];
+				vc.type = "sink";
 				var medl = (vc.v1.layer + vc.v2.layer)/2;
 				if( vc.v1.layer < medl ){
 					vc.y1 = y1 + this.curveRadius;
@@ -8644,7 +8646,7 @@ TRAViz.prototype.visualize = function(){
 	this.startVertex.x2 = nXs;
 	for( var i=0; i<this.startVertex.successors.length; i++ ){
 		var c = this.getConnection(this.startVertex,this.graph.getVertex(this.startVertex.successors[i]));
-		if( c.type == 1 ){
+		if( c.type == 1 && c.links[0].type == "source" ){
 			c.links[0].x1 = nXs + this.curveRadius;
 			c.links[0].x2 = nXs + this.curveRadius;
 		}
@@ -8665,7 +8667,7 @@ TRAViz.prototype.visualize = function(){
 	this.endVertex.x2 = nXe;
 	for( var i=0; i<this.endVertex.predecessors.length; i++ ){
 		var c = this.getConnection(this.graph.getVertex(this.endVertex.predecessors[i]),this.endVertex);
-		if( c.type == 1 ){
+		if( c.type == 1 && c.links[0].type == "sink" ){
 			c.links[0].x1 = nXe - this.curveRadius;
 			c.links[0].x2 = nXe - this.curveRadius;
 		}
