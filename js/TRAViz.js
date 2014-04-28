@@ -1903,15 +1903,27 @@ TRAViz.prototype.visualize = function(){
 	this.setConnections();
 	this.removeOverlaps();
 	this.transformEdgeTypes();
-	var nXs = 100000;
+	var nXs = false;
 	for( var i=0; i<this.startVertex.successors.length; i++ ){
 		var suc = this.graph.getVertex(this.startVertex.successors[i]);
-		if( suc.x1 - 4*this.curveRadius < nXs ){
+		if( !nXs || suc.x1 - 4*this.curveRadius < nXs ){
 			nXs = suc.x1 - 4*this.curveRadius;
 		}
 	}
 	this.startVertex.x1 = nXs;
 	this.startVertex.x2 = nXs;
+	for( var i=0; i<this.startVertex.successors.length; i++ ){
+		var c = this.getConnection(this.startVertex,this.graph.getVertex(this.startVertex.successors[i]));
+		if( c.type == 1 ){
+			c.links[0].x1 = nXs + this.curveRadius;
+			c.links[0].x2 = nXs + this.curveRadius;
+		}
+		else if( c.type == 3 || c.type == 0 ){
+			c.links[0].x1 = nXs + this.curveRadius;
+			c.links[0].x2 = nXs + this.curveRadius;
+			c.links[1].x1 = nXs + 2*this.curveRadius;
+		}
+	}
 	var nXe = 0;
 	for( var i=0; i<this.endVertex.predecessors.length; i++ ){
 		var pred = this.graph.getVertex(this.endVertex.predecessors[i]);
@@ -1921,6 +1933,18 @@ TRAViz.prototype.visualize = function(){
 	}
 	this.endVertex.x1 = nXe;
 	this.endVertex.x2 = nXe;
+	for( var i=0; i<this.endVertex.predecessors.length; i++ ){
+		var c = this.getConnection(this.graph.getVertex(this.endVertex.predecessors[i]),this.endVertex);
+		if( c.type == 1 ){
+			c.links[0].x1 = nXe - this.curveRadius;
+			c.links[0].x2 = nXe - this.curveRadius;
+		}
+		else if( c.type == 3 || c.type == 0 ){
+			c.links[2].x1 = nXe - this.curveRadius;
+			c.links[2].x2 = nXe - this.curveRadius;
+			c.links[1].x2 = nXe - 2*this.curveRadius;
+		}
+	}
 	var x_min = false, x_max = false;
 	var y_min = false, y_max = false;
 	if( this.config.options.rtl ){
