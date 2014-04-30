@@ -8633,7 +8633,7 @@ TRAViz.prototype.visualize = function(){
 	}
 	this.layers.sort(sortLayers);
 	this.setConnections();
-	this.removeOverlaps();
+	//this.removeOverlaps();
 	this.transformEdgeTypes();
 	var nXs = false;
 	for( var i=0; i<this.startVertex.successors.length; i++ ){
