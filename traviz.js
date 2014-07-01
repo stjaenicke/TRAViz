@@ -6375,6 +6375,7 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 	var tokenized = [];
 	var lastVertex = undefined;
 	var wordlist = [];
+	var preferenceMerge = [];
 	for( var i=0; i<sentences.length; i++ ){
 		var sword = [];
 		lastVertex = undefined;
@@ -6382,9 +6383,18 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 		var tokens = sentence.split(" ");
 		var t = [];
 		for( var j=0; j<tokens.length; j++ ){
+			var token = tokens[j];
+			var contentToken = tokens[j];
+			var id = false;
+			if( token.indexOf("<>") != -1 ){
+				id = token.substring(1,token.indexOf('>'));
+				contentToken = token.substring(token.indexOf('>')+1);
+				contentToken = contentToken.substring(0,contentToken.indexOf('<'));
+				token = token.substring(0,token.indexOf('>')+1)+"<>";
+			}
 			var word = {
 				id: i+"-"+j,
-				word: tokens[j],
+				word: token,
 				sid: i,
 				wid: j,
 				gid: words.length
@@ -6392,10 +6402,20 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 			words.push(word);
 			sword.push(word);
 			t.push(word);
-			var v = new TRAVizVertex(this.graph,this.config.getVertexIndex(),tokens[j]);
+			var v = new TRAVizVertex(this.graph,this.config.getVertexIndex(),token);
+			if( id ){
+				v.preferenceId = id;
+				if( typeof preferenceMerge[id] == "undefined" ){
+					preferenceMerge[id] = { vertices:[v], tokens: [contentToken] };
+				}
+				else {
+					preferenceMerge[id].vertices.push(v);
+					preferenceMerge[id].tokens.push(contentToken);
+				}
+			}
 			v.sources.push({
 				sourceId: i,
-				token: tokens[j]
+				token: token
 			});
 			this.graph.addVertex(v);
 			if( typeof lastVertex != 'undefined' ){
@@ -6446,7 +6466,7 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 			}
 		}
 	}
-/*
+	/*
 	for( var i=0; i<pairs.length; i++ ){
 		var w1 = pairs[i].pair.w1;
 		var w2 = pairs[i].pair.w2;
@@ -6474,7 +6494,12 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 		return 1;
 	}
 	pairs.sort(sortBySize2);
-*/
+	*/
+	for( var i=0; i<preferenceMerge.length; i++ ){
+		for( var j=0; j<preferenceMerge[i].vertices.length; j++ ){
+			preferenceMerge[i].vertices[j].token = preferenceMerge[i].tokens[j];
+		}
+	}
 	var checkMerge = function(w1,w2){
 		var v1 = sal.graph.getVertex(wordVertices[w1.id].index), v2 = sal.graph.getVertex(wordVertices[w2.id].index);
 		if( v1 == v2 ){
@@ -6489,8 +6514,19 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 			}
 		}
 	}
+	if( preferenceMerge.length > 0 ){
+		for( var i=0; i<pairs.length; i++ ){
+			var v1 = sal.graph.getVertex(wordVertices[w1.id].index), v2 = sal.graph.getVertex(wordVertices[w2.id].index);
+			if( v1.preferenceId && v1.preferenceId == v2.preferenceId ){
+				checkMerge(pairs[i].pair.w1,pairs[i].pair.w2);
+				pairs[i].mark = true;
+			}
+		}
+	}
 	for( var i=0; i<pairs.length; i++ ){
-		checkMerge(pairs[i].pair.w1,pairs[i].pair.w2);
+		if( !pairs[i].mark ){
+			checkMerge(pairs[i].pair.w1,pairs[i].pair.w2);
+		}
 	}
 	var sentencePaths = [];
 	for( var i=0; i<wordlist.length; i++ ){
@@ -7320,6 +7356,7 @@ TRAViz.prototype.removeOverlaps = function(){
 						v1.x2 += mr;
 					}
 				}
+				/*
 				if( !moved ){
 					var verticesToMove = [];
 					var hash = [];
@@ -7364,11 +7401,11 @@ TRAViz.prototype.removeOverlaps = function(){
 					this.adjustVerticalConnections();
 					this.verticals.sort(sortVerticals);
 					i = 0;
-				}
+				}*/
 			}
 		}
 	}
-	this.setConnections();
+	//this.setConnections();
 }
 
 /**
@@ -7434,8 +7471,8 @@ TRAViz.prototype.transformEdgeTypes = function(){
 					break;
 				}				
 				if( this.overlap(c.v2.x1-2*this.curveRadius,c.v2.x1,x21,x22,Math.min(y1,y2),Math.max(y1,y2),y21,y22) ){
-					olV1 = true;
-					break;
+//					olV1 = true;
+//					break;
 				}				
 			}
 			for( var j=0; j<horizontalSnippets.length; j++ ){
@@ -7466,8 +7503,8 @@ TRAViz.prototype.transformEdgeTypes = function(){
 					break;
 				}
 				if( this.overlap(c.v1.x2,c.v1.x2+2*this.curveRadius,x21,x22,Math.min(y1,y2),Math.max(y1,y2),y21,y22) ){
-					olV2 = true;
-					break;
+//					olV2 = true;
+//					break;
 				}				
 			}
 			for( var j=0; j<horizontalSnippets.length; j++ ){
@@ -7948,7 +7985,7 @@ TRAViz.prototype.majorityConnections = function(majority){
 	}
 	for( var i=0; i<edges.length; i++ ){
 		var e = edges[i];
-		if( majority && e.weight > this.sentencePaths.length/2 ){
+		if( majority && e.weight > this.sentencePaths.length * this.config.options.majorityPercentage ){
 			e.head.outs.push({
 				v: e.tail,
 				id: -1
@@ -8033,7 +8070,7 @@ TRAViz.prototype.majorityConnections = function(majority){
 		if( !c ){
 			continue;
 		}
-		if( majority && e.weight > this.sentencePaths.length/2 ){
+		if( majority && e.weight > this.sentencePaths.length*this.config.options.majorityPercentage ){
 			var path = null;
 			if( this.config.options.interpolateFontSize ){
 				path = this.generatePath(c,getShiftHeight(-1,e.head.outs,e.head.boxHeight),getShiftHeight(-1,e.tail.ins,e.tail.boxHeight));
@@ -8415,7 +8452,7 @@ TRAViz.prototype.visualize = function(){
 			content: {	
 				text: tiptext,
 				title: {
-					text: "<div>\""+vertex.token+"\": "+vertex.sources.length+"&nbsp;occurrences</div>",
+					text: "<div>\""+vertex.token+"\": "+vertex.sources.length+"&nbsp;"+sal.config.options.popupLabel+"</div>",
 					button: 'X'
 				}
 			},
@@ -8633,7 +8670,7 @@ TRAViz.prototype.visualize = function(){
 	}
 	this.layers.sort(sortLayers);
 	this.setConnections();
-	//this.removeOverlaps();
+	this.removeOverlaps();
 	this.transformEdgeTypes();
 	var nXs = false;
 	for( var i=0; i<this.startVertex.successors.length; i++ ){
@@ -8836,10 +8873,11 @@ function TRAVizConfig(options) {
 		normalize: true, // if the sentences shall be normalized or not (remove special characters)		
 		lineBreaks: true, // if line breaks are allowed or not (if true, only the width of the given div is used)		
 		rtl: false, // if labels should be drawn from right to left (for arabic, hebrew)
+		popupLabel: "occurrences", // header label to be shown in the popup window
 
 		/* Text Vertices */		
 		baseColor: '#3E576F', // color used for text and joined connections		
-		vertexBackground: '#F2F2F2', // false or a CSS color for the text backgrounds		
+		vertexBackground: 'rgba(242,242,242,0.75)', // false or a CSS color for the text backgrounds		
 		font: 'Georgia', // text font		
 		startAndEnd: true, // if start and end vertex are shown and linked to all paths
 		collapseLabels: 0, // text labels are only shown for vertices with more than the given value
@@ -8851,10 +8889,11 @@ function TRAVizConfig(options) {
 		/* Connections */
 		edgeGap: 5, // minimum gap between two connections; required when adjusting the connections horizontally and vertically		
 		curveRadius: 10, // radius of the curves
-		connectionType: 'all' // how the connections shall be displayed: 
+		connectionType: 'all', // how the connections shall be displayed: 
 						// 'all' for displaying each individual stream, 
 						// 'joined' to merge all parallel connections, or 
 						// 'majority' to merge only if more than half of the edges are routed between the same vertices
+		majorityPercentage: 0.5 // an edge becomes a majority edge when the given percentage of editions passes it
 
 	};
 

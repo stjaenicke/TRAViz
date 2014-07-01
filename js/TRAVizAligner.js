@@ -90,6 +90,7 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 	var tokenized = [];
 	var lastVertex = undefined;
 	var wordlist = [];
+	var preferenceMerge = [];
 	for( var i=0; i<sentences.length; i++ ){
 		var sword = [];
 		lastVertex = undefined;
@@ -97,9 +98,18 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 		var tokens = sentence.split(" ");
 		var t = [];
 		for( var j=0; j<tokens.length; j++ ){
+			var token = tokens[j];
+			var contentToken = tokens[j];
+			var id = false;
+			if( token.indexOf("<>") != -1 ){
+				id = token.substring(1,token.indexOf('>'));
+				contentToken = token.substring(token.indexOf('>')+1);
+				contentToken = contentToken.substring(0,contentToken.indexOf('<'));
+				token = token.substring(0,token.indexOf('>')+1)+"<>";
+			}
 			var word = {
 				id: i+"-"+j,
-				word: tokens[j],
+				word: token,
 				sid: i,
 				wid: j,
 				gid: words.length
@@ -107,10 +117,20 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 			words.push(word);
 			sword.push(word);
 			t.push(word);
-			var v = new TRAVizVertex(this.graph,this.config.getVertexIndex(),tokens[j]);
+			var v = new TRAVizVertex(this.graph,this.config.getVertexIndex(),token);
+			if( id ){
+				v.preferenceId = id;
+				if( typeof preferenceMerge[id] == "undefined" ){
+					preferenceMerge[id] = { vertices:[v], tokens: [contentToken] };
+				}
+				else {
+					preferenceMerge[id].vertices.push(v);
+					preferenceMerge[id].tokens.push(contentToken);
+				}
+			}
 			v.sources.push({
 				sourceId: i,
-				token: tokens[j]
+				token: token
 			});
 			this.graph.addVertex(v);
 			if( typeof lastVertex != 'undefined' ){
@@ -161,7 +181,7 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 			}
 		}
 	}
-/*
+	/*
 	for( var i=0; i<pairs.length; i++ ){
 		var w1 = pairs[i].pair.w1;
 		var w2 = pairs[i].pair.w2;
@@ -189,7 +209,12 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 		return 1;
 	}
 	pairs.sort(sortBySize2);
-*/
+	*/
+	for( var i=0; i<preferenceMerge.length; i++ ){
+		for( var j=0; j<preferenceMerge[i].vertices.length; j++ ){
+			preferenceMerge[i].vertices[j].token = preferenceMerge[i].tokens[j];
+		}
+	}
 	var checkMerge = function(w1,w2){
 		var v1 = sal.graph.getVertex(wordVertices[w1.id].index), v2 = sal.graph.getVertex(wordVertices[w2.id].index);
 		if( v1 == v2 ){
@@ -204,8 +229,19 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 			}
 		}
 	}
+	if( preferenceMerge.length > 0 ){
+		for( var i=0; i<pairs.length; i++ ){
+			var v1 = sal.graph.getVertex(wordVertices[w1.id].index), v2 = sal.graph.getVertex(wordVertices[w2.id].index);
+			if( v1.preferenceId && v1.preferenceId == v2.preferenceId ){
+				checkMerge(pairs[i].pair.w1,pairs[i].pair.w2);
+				pairs[i].mark = true;
+			}
+		}
+	}
 	for( var i=0; i<pairs.length; i++ ){
-		checkMerge(pairs[i].pair.w1,pairs[i].pair.w2);
+		if( !pairs[i].mark ){
+			checkMerge(pairs[i].pair.w1,pairs[i].pair.w2);
+		}
 	}
 	var sentencePaths = [];
 	for( var i=0; i<wordlist.length; i++ ){

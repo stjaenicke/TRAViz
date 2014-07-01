@@ -54,10 +54,11 @@ function TRAVizConfig(options) {
 		normalize: true, // if the sentences shall be normalized or not (remove special characters)		
 		lineBreaks: true, // if line breaks are allowed or not (if true, only the width of the given div is used)		
 		rtl: false, // if labels should be drawn from right to left (for arabic, hebrew)
+		popupLabel: "occurrences", // header label to be shown in the popup window
 
 		/* Text Vertices */		
 		baseColor: '#3E576F', // color used for text and joined connections		
-		vertexBackground: '#F2F2F2', // false or a CSS color for the text backgrounds		
+		vertexBackground: 'rgba(242,242,242,0.75)', // false or a CSS color for the text backgrounds		
 		font: 'Georgia', // text font		
 		startAndEnd: true, // if start and end vertex are shown and linked to all paths
 		collapseLabels: 0, // text labels are only shown for vertices with more than the given value
@@ -69,10 +70,11 @@ function TRAVizConfig(options) {
 		/* Connections */
 		edgeGap: 5, // minimum gap between two connections; required when adjusting the connections horizontally and vertically		
 		curveRadius: 10, // radius of the curves
-		connectionType: 'all' // how the connections shall be displayed: 
+		connectionType: 'all', // how the connections shall be displayed: 
 						// 'all' for displaying each individual stream, 
 						// 'joined' to merge all parallel connections, or 
 						// 'majority' to merge only if more than half of the edges are routed between the same vertices
+		majorityPercentage: 0.5 // an edge becomes a majority edge when the given percentage of editions passes it
 
 	};
 

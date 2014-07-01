@@ -590,6 +590,7 @@ TRAViz.prototype.removeOverlaps = function(){
 						v1.x2 += mr;
 					}
 				}
+				/*
 				if( !moved ){
 					var verticesToMove = [];
 					var hash = [];
@@ -634,11 +635,11 @@ TRAViz.prototype.removeOverlaps = function(){
 					this.adjustVerticalConnections();
 					this.verticals.sort(sortVerticals);
 					i = 0;
-				}
+				}*/
 			}
 		}
 	}
-	this.setConnections();
+	//this.setConnections();
 }
 
 /**
@@ -704,8 +705,8 @@ TRAViz.prototype.transformEdgeTypes = function(){
 					break;
 				}				
 				if( this.overlap(c.v2.x1-2*this.curveRadius,c.v2.x1,x21,x22,Math.min(y1,y2),Math.max(y1,y2),y21,y22) ){
-					olV1 = true;
-					break;
+//					olV1 = true;
+//					break;
 				}				
 			}
 			for( var j=0; j<horizontalSnippets.length; j++ ){
@@ -736,8 +737,8 @@ TRAViz.prototype.transformEdgeTypes = function(){
 					break;
 				}
 				if( this.overlap(c.v1.x2,c.v1.x2+2*this.curveRadius,x21,x22,Math.min(y1,y2),Math.max(y1,y2),y21,y22) ){
-					olV2 = true;
-					break;
+//					olV2 = true;
+//					break;
 				}				
 			}
 			for( var j=0; j<horizontalSnippets.length; j++ ){
@@ -1218,7 +1219,7 @@ TRAViz.prototype.majorityConnections = function(majority){
 	}
 	for( var i=0; i<edges.length; i++ ){
 		var e = edges[i];
-		if( majority && e.weight > this.sentencePaths.length/2 ){
+		if( majority && e.weight > this.sentencePaths.length * this.config.options.majorityPercentage ){
 			e.head.outs.push({
 				v: e.tail,
 				id: -1
@@ -1303,7 +1304,7 @@ TRAViz.prototype.majorityConnections = function(majority){
 		if( !c ){
 			continue;
 		}
-		if( majority && e.weight > this.sentencePaths.length/2 ){
+		if( majority && e.weight > this.sentencePaths.length*this.config.options.majorityPercentage ){
 			var path = null;
 			if( this.config.options.interpolateFontSize ){
 				path = this.generatePath(c,getShiftHeight(-1,e.head.outs,e.head.boxHeight),getShiftHeight(-1,e.tail.ins,e.tail.boxHeight));
@@ -1685,7 +1686,7 @@ TRAViz.prototype.visualize = function(){
 			content: {	
 				text: tiptext,
 				title: {
-					text: "<div>\""+vertex.token+"\": "+vertex.sources.length+"&nbsp;occurrences</div>",
+					text: "<div>\""+vertex.token+"\": "+vertex.sources.length+"&nbsp;"+sal.config.options.popupLabel+"</div>",
 					button: 'X'
 				}
 			},
@@ -1903,7 +1904,7 @@ TRAViz.prototype.visualize = function(){
 	}
 	this.layers.sort(sortLayers);
 	this.setConnections();
-	//this.removeOverlaps();
+	this.removeOverlaps();
 	this.transformEdgeTypes();
 	var nXs = false;
 	for( var i=0; i<this.startVertex.successors.length; i++ ){
