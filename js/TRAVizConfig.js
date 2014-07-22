@@ -74,7 +74,13 @@ function TRAVizConfig(options) {
 						// 'all' for displaying each individual stream, 
 						// 'joined' to merge all parallel connections, or 
 						// 'majority' to merge only if more than half of the edges are routed between the same vertices
-		majorityPercentage: 0.5 // an edge becomes a majority edge when the given percentage of editions passes it
+		majorityPercentage: 0.5, // an edge becomes a majority edge when the given percentage of editions passes it
+
+		editDistance: false, // false (or 0) if only exact matches between two words shall be merged or edit distance dependent on the word lengths computed with the formula 2*editDistance/(|word1|+|word2|)
+
+		splitAndMerge: true, // if the user is allowed to interactively split vertices or merge via drag&drop
+
+		transpositions: true, // if transpositions shall be determined and visualized on mouseover
 
 	};
 

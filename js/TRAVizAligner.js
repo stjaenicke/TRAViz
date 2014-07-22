@@ -265,6 +265,39 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 };
 
 /**
+ * returns the edit distance for two given words <a> and <b>
+ * thankfully taken from: http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance
+ */
+TRAVizAligner.prototype.getEditDistance = function(a,b){
+	if( a.length === 0 ){
+		return b.length;
+	}
+	if( b.length === 0 ){
+		return a.length;
+	} 
+	var matrix = [];
+	var i;
+	for( i=0; i<=b.length; i++ ){
+		matrix[i] = [i];
+	}
+	var j;
+	for( j=0; j<=a.length; j++ ){
+		matrix[0][j] = j;
+	}
+	for( i=1; i<=b.length; i++ ){
+		for( j=1; j<=a.length; j++ ){
+			if( b.charAt(i-1) == a.charAt(j-1) ){
+				matrix[i][j] = matrix[i-1][j-1];
+			}
+			else {
+				matrix[i][j] = Math.min(matrix[i-1][j-1]+1,Math.min(matrix[i][j-1]+1,matrix[i-1][j]+1));
+			}
+		}
+	}
+	return matrix[b.length][a.length];
+};
+
+/**
  * returns all possible paths with aligned tokens in the correct order between sentences <s1> and <s2>
  */
 TRAVizAligner.prototype.pairAlignment = function(s1,s2){
@@ -272,10 +305,17 @@ TRAVizAligner.prototype.pairAlignment = function(s1,s2){
 	for( var i=0; i<s1.length; i++ ){
 		matches.push([]);
 		for( var j=0; j<s2.length; j++ ){
-			if( s1[i].word == s2[j].word ){
+			if( this.config.options.editDistance ){
+				var ld = this.getEditDistance(s1[i].word,s2[j].word);
+				var red = 2*ld / (s1[i].word.length+s2[j].word.length);
+				if( red <= this.config.options.editDistance ){
+					matches[i].push(s2[j]);
+				}
+			}
+			else if( s1[i].word == s2[j].word ){
 				matches[i].push(s2[j]);
 			}
-		}			
+		}
 	}
 	var paths = [];
 	for( var i=0; i<matches.length; i++ ){

@@ -6051,6 +6051,7 @@ TRAVizGraph.prototype.addVertex = function(v){
  */
 TRAVizGraph.prototype.clone = function(){
 	var cg = new TRAVizGraph();
+	cg.config = this.config;
 	for( var i=0; i<this.vertices.length; i++ ){
 		cg.addVertex(new TRAVizVertex(cg,this.vertices[i].index,this.vertices[i].token));
 	}
@@ -6550,6 +6551,39 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 };
 
 /**
+ * returns the edit distance for two given words <a> and <b>
+ * thankfully taken from: http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance
+ */
+TRAVizAligner.prototype.getEditDistance = function(a,b){
+	if( a.length === 0 ){
+		return b.length;
+	}
+	if( b.length === 0 ){
+		return a.length;
+	} 
+	var matrix = [];
+	var i;
+	for( i=0; i<=b.length; i++ ){
+		matrix[i] = [i];
+	}
+	var j;
+	for( j=0; j<=a.length; j++ ){
+		matrix[0][j] = j;
+	}
+	for( i=1; i<=b.length; i++ ){
+		for( j=1; j<=a.length; j++ ){
+			if( b.charAt(i-1) == a.charAt(j-1) ){
+				matrix[i][j] = matrix[i-1][j-1];
+			}
+			else {
+				matrix[i][j] = Math.min(matrix[i-1][j-1]+1,Math.min(matrix[i][j-1]+1,matrix[i-1][j]+1));
+			}
+		}
+	}
+	return matrix[b.length][a.length];
+};
+
+/**
  * returns all possible paths with aligned tokens in the correct order between sentences <s1> and <s2>
  */
 TRAVizAligner.prototype.pairAlignment = function(s1,s2){
@@ -6557,10 +6591,17 @@ TRAVizAligner.prototype.pairAlignment = function(s1,s2){
 	for( var i=0; i<s1.length; i++ ){
 		matches.push([]);
 		for( var j=0; j<s2.length; j++ ){
-			if( s1[i].word == s2[j].word ){
+			if( this.config.options.editDistance ){
+				var ld = this.getEditDistance(s1[i].word,s2[j].word);
+				var red = 2*ld / (s1[i].word.length+s2[j].word.length);
+				if( red <= this.config.options.editDistance ){
+					matches[i].push(s2[j]);
+				}
+			}
+			else if( s1[i].word == s2[j].word ){
 				matches[i].push(s2[j]);
 			}
-		}			
+		}
 	}
 	var paths = [];
 	for( var i=0; i<matches.length; i++ ){
@@ -6845,6 +6886,89 @@ TRAViz.prototype.align = function(sources){
 		this.sentencePathHash[this.editions[i]] = this.sentencePaths[i];
 	}
 	this.vertices = this.aligner.graph.vertices;
+	for( var i=0; i<this.vertices.length; i++ ){
+		var v = this.vertices[i];
+		var tokenHash = [];
+		var token = "", count = 0;
+		for( var j=0; j<v.sources.length; j++ ){
+			if( typeof tokenHash[v.sources[j].token] == "undefined" ){
+				tokenHash[v.sources[j].token] = 1;
+			}
+			else {
+				tokenHash[v.sources[j].token]++;
+			}
+			if( tokenHash[v.sources[j].token] > count ){
+				token = v.sources[j].token;
+				count = tokenHash[v.sources[j].token];
+			}
+		}
+		v.token = token;
+	}
+	this.originGraph = this.graph.clone();
+	this.originSentencePaths = [];
+	for( var i=0; i<this.sentencePaths.length; i++ ){
+		this.originSentencePaths.push([]);
+		for( var j=0; j<this.sentencePaths[i].length; j++ ){
+			this.originSentencePaths.push(this.sentencePaths[i][j]);
+		}
+	}
+}
+
+/**
+ * updates all sentence paths after merge or split operations
+ */
+TRAViz.prototype.reset = function(v){
+	for( var i=0; i<this.sentencePaths.length; i++ ){
+		var p = this.sentencePaths[i];
+		for( var j=p.length; j>0; j-- ){
+			if( p[j-1].dummy ){
+				p.splice(j-1,1);
+			}
+		}
+	}
+	for( var i=0; i<this.originGraph.vertices.length; i++ ){
+		var v = this.originGraph.vertices[i];
+		v.predecessors = [];
+		v.successors = [];
+	}
+	for( var i=0; i<this.sentencePaths.length; i++ ){
+		var p = this.sentencePaths[i];
+		for( var j=0; j<p.length-1; j++ ){
+			this.originGraph.getVertex(p[j].index).addSuccessor(p[j+1].index);
+			this.originGraph.getVertex(p[j+1].index).addPredecessor(p[j].index);
+		}
+	}
+	this.graph = this.originGraph.clone();
+	this.aligner.graph = this.graph;
+	this.vertices = this.graph.vertices;
+	this.startVertex = this.graph.getVertex("first");
+	this.endVertex = this.graph.getVertex("last");
+	for( var i=0; i<this.sentencePaths.length; i++ ){
+		var p = this.sentencePaths[i];
+		for( var j=p.length; j>0; j-- ){
+			p[j-1] = this.graph.getVertex(p[j-1].index);
+		}
+	}
+	for( var i=0; i<this.vertices.length; i++ ){
+		var v = this.vertices[i];
+		v.layer = undefined;
+		v.originLayer = undefined;
+		var tokenHash = [];
+		var token = "", count = 0;
+		for( var j=0; j<v.sources.length; j++ ){
+			if( typeof tokenHash[v.sources[j].token] == "undefined" ){
+				tokenHash[v.sources[j].token] = 1;
+			}
+			else {
+				tokenHash[v.sources[j].token]++;
+			}
+			if( tokenHash[v.sources[j].token] > count ){
+				token = v.sources[j].token;
+				count = tokenHash[v.sources[j].token];
+			}
+		}
+		v.token = token;
+	}
 }
 
 /**
@@ -8212,6 +8336,18 @@ TRAViz.prototype.getLayer = function(index){
 }
 
 /**
+ * Getter for the array_index for the layer with the given <index>
+ */
+TRAViz.prototype.getLayerIndex = function(index){
+	for( var i=0; i<this.layers.length; i++ ){
+		if( this.layers[i].index == index ){
+			return i;
+		}
+	}
+	return false;
+}
+
+/**
  * Computes all connections dependent on the current vertex positions.
  */
 TRAViz.prototype.setConnections = function(){
@@ -8299,10 +8435,12 @@ TRAViz.prototype.insertDummys = function(){
 			var dvh, dvt;
 			if( typeof dummys[e.tail.index+''] == 'undefined' ){
 				dvh = new TRAVizVertex(this.graph,this.config.getVertexIndex(),'');
+				dvh.dummy = true;
 				dvh.predecessors = [e.head.index];
 				e.head.removeSuccessor(e.tail.index);
 				e.head.addSuccessor(dvh.index);
 				dvt = new TRAVizVertex(this.graph,this.config.getVertexIndex(),'');
+				dvt.dummy = true;
 				dvt.successors = [e.tail.index];
 				e.tail.removePredecessor(e.head.index);
 				e.tail.addPredecessor(dvt.index);					
@@ -8395,6 +8533,166 @@ TRAViz.prototype.setMainBranch = function(id){
 };
 
 /**
+ * Computes the path of the given transposition between <v1> and <v2>
+ */
+TRAViz.prototype.generateTranspositionPath = function(v1,v2){
+	var bezier = function(x1,y1,xb,yb,x2,y2){
+		return "C "+x1+" "+y1+" "+xb+" "+yb+" "+x2+" "+y2+" ";
+	}
+	var line = function(x1,y1,x2,y2){
+		return "L "+x1+" "+y1+" "+x2+" "+y2+" ";
+	}
+	var x1 = v1.x, x2 = v2.x;
+	var y1, y2, y3, y4, y5;
+	var l1 = this.getLayer(v1.layer);
+	var l2 = this.getLayer(v2.layer);
+	var cr = Math.min(this.curveRadius,Math.abs(x1-x2)/2);
+	if( l1 == l2 ){
+		var y1 = v1.y2;
+		var y2 = (v1.y1+v1.y2)/2 + l1.height/2;
+		var y3 = (v1.y1+v1.y2)/2 + l1.height/2 + cr;		
+		var y4 = (v2.y1+v2.y2)/2 + l1.height/2;
+		var y5 = v2.y2;
+	}
+	else if( l1.index < l2.index ){
+		var hsh = this.horizontalSlots[this.getLayerIndex(v1.layer)+1].yMax - this.horizontalSlots[this.getLayerIndex(v1.layer)+1].yMin;
+		var y1 = v1.y2;
+		var y2 = (v1.y1+v1.y2)/2 + l1.height/2 + hsh/2;
+		var y3 = (v1.y1+v1.y2)/2 + l1.height/2 + hsh/2 + cr;		
+		var y4 = y3 + cr;
+		var y5 = v2.y1;
+	}
+	else if( l1.index > l2.index ){
+		var hsh = this.horizontalSlots[this.getLayerIndex(v1.layer)].yMax - this.horizontalSlots[this.getLayerIndex(v1.layer)].yMin;
+		var y1 = v1.y1;
+		var y2 = (v1.y1+v1.y2)/2 - l1.height/2 - hsh/2;
+		var y3 = (v1.y1+v1.y2)/2 - l1.height/2 - hsh/2 - cr;		
+		var y4 = y3 - cr;
+		var y5 = v2.y2;
+	}
+	var path = "M "+x1+" "+y1+" ";
+	path += line(x1,y1,x1,y2);
+	path += bezier(x1,y2,x1,y3,x1+cr,y3);
+	path += line(x1+cr,y3,x2-cr,y3);
+	path += bezier(x2-cr,y3,x2,y3,x2,y4);
+	path += line(x2,y4,x2,y5);
+	return path;	
+}
+
+/**
+ * Calculates minimum spanning trees for (potential) transpositions.
+ */
+TRAViz.prototype.calculateTranspositions = function(){
+	var groups = [];
+	for( var i=0; i<this.vertices.length; i++ ){
+		if( this.vertices[i] == this.startVertex || this.vertices[i] == this.endVertex || this.vertices[i].token == '' ){
+			continue;
+		}
+		this.vertices[i].x = (this.vertices[i].x1+this.vertices[i].x2)/2;
+		var found = false;
+		for( var j=0; j<groups.length; j++ ){
+			if( groups[j][0].token == this.vertices[i].token ){
+				groups[j].push(this.vertices[i]);
+				found = true;
+				break;
+			}
+		}
+/*
+		if( this.config.options.editDistance ){
+			for( var j=0; j<groups.length; j++ ){
+				var g = groups[j];
+				for( var k=0; k<g.length; k++ ){
+					for( var l=0; l<g[k].sources.length; l++ ){
+						for( var m=0; m<this.vertices[i].sources.length; m++ ){
+							var ld = this.aligner.getEditDistance(g[k].sources[l].token,this.vertices[i].sources[m].token);
+							var red = 2*ld / (g[k].sources[l].token.length+this.vertices[i].sources[m].token.length);
+							if( red <= this.config.options.editDistance ){
+								groups[j].push(this.vertices[i]);
+								found = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+*/
+		if( !found ){
+			groups.push([this.vertices[i]]);
+		}
+	}
+	for( var i=0; i<groups.length; i++ ){
+		var g = groups[i];
+		if( g.length == 1 ){
+			continue;
+		}
+		for( var j=0; j<g.length; j++ ){
+			g[j].transpositions = [];
+			g[j].transpositionGroup = g;
+			for( var k=0; k<g.length; k++ ){
+				if( j == k ){
+					continue;
+				}
+				var path = "";
+				if( g[j].x < g[k].x ){
+					path = this.generateTranspositionPath(g[j],g[k]);
+				}
+				else {
+					path = this.generateTranspositionPath(g[k],g[j]);
+				}
+				var p = this.paper.path(path).attr({"stroke-width": 3, "stroke-dasharray":'.', "opacity": "1.0"});
+				$(p.node).css('display','none');
+				g[j].transpositions.push(p);
+			}
+		}
+	}
+	/*
+	var distance = function(v1,v2){
+		var x1 = (v1.x1 + v1.x2)/2;
+		var y1 = (v1.y1 + v1.y2)/2;
+		var x2 = (v2.x1 + v2.x2)/2;
+		var y2 = (v2.y1 + v2.y2)/2;
+		v1.x = x1;
+		v1.y = y1;
+		v2.x = x2;
+		v2.y = y2;
+		return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+	}
+	for( var i=0; i<groups.length; i++ ){
+		var g = groups[i];
+		if( g.length == 1 ){
+			continue;
+		}
+		var matrix = new AdjMatrix(g.length);
+		for (var k = 0; k < g.length - 1; k++) {
+			for (var l = k + 1; l < g.length; l++) {
+				matrix.setEdge( k, l, distance(g[k],g[l]) );
+			}
+		}
+		var tree = Prim(matrix);
+		var paths = [];
+		for (var z = 0; z < tree.length; z++) {
+			var v1 = g[tree[z].v1];
+			var v2 = g[tree[z].v2];			
+			var path = "";
+			if( v1.x < v2.x ){
+				path = this.generateTranspositionPath(v1,v2);
+			}
+			else {
+				path = this.generateTranspositionPath(v2,v1);
+			}
+			var p = this.paper.path(path).attr({"stroke-width": 4, "stroke-dasharray":'.', "opacity": "1.0"});
+			$(p.node).css('display','none');
+			paths.push(p);
+		}
+		for( var j=0; j<g.length; j++ ){
+			g[j].transpositions = paths;
+		}
+	}
+	*/
+};
+
+/**
  * Main funtion to be called to visualize the computed Text Variant Graph.
  */
 TRAViz.prototype.visualize = function(){
@@ -8415,6 +8713,132 @@ TRAViz.prototype.visualize = function(){
 	var heights = [];
 	$("#"+this.div).empty();
 	var x, y = 1000;
+	var getMousePosition = function(event) {
+		if (!event) {
+			event = window.event;
+		}
+		var body = (window.document.compatMode && window.document.compatMode == "CSS1Compat") ? window.document.documentElement : window.document.body;
+		return {
+			top : event.pageY ? event.pageY : event.clientY,
+			left : event.pageX ? event.pageX : event.clientX
+		};
+	};
+	var dragNode = function(evt,node,vertex){
+		var startPos = getMousePosition(evt);
+		var nodeX1 = vertex.x1;
+		var nodeX2 = vertex.x2;
+		var nodeY1 = vertex.y1;
+		var nodeY2 = vertex.y2;
+		var clone = false;
+		var mergeNode = false, acyclic = false;
+		document.onmouseup = function(){
+			if(document.selection && document.selection.empty) {
+				document.selection.empty();
+			}
+			else if(window.getSelection){
+				var sel = window.getSelection();
+				sel.removeAllRanges();
+			}
+			document.onmousemove = null;
+			document.onmouseup = null;
+			if( mergeNode && !acyclic ){
+				alert('Invalid merge attempt produced a circle in the graph!');
+				clone.attr({ fill : sal.config.options.baseColor });
+				mergeNode.textNode.attr({ fill : sal.config.options.baseColor });
+				$(clone.node).fadeOut(1000, function(){
+					$(clone).remove();
+				});
+			}
+			else if( mergeNode && acyclic ){
+				var v = sal.originGraph.isAcyclicFromVertex(sal.originGraph.getVertex(mergeNode.index),sal.originGraph.getVertex(vertex.index));
+				for( var i=0; i<sal.sentencePaths.length; i++ ){
+					var p = sal.sentencePaths[i];
+					for( var j=0; j<p.length; j++ ){
+						if( p[j] == mergeNode || p[j] == vertex ){
+							p[j] = v;
+						}
+					}
+				}
+				sal.reset();
+				sal.visualize();
+			}
+			else {
+				$(clone.node).fadeOut(1000, function(){
+					$(clone).remove();
+				});
+			}
+		}
+		document.onmousemove = function(e){
+			if( !clone ){
+				clone = sal.paper.text(( vertex.x1 + vertex.x2 )/2, ( vertex.y1 + vertex.y2 )/2, vertex.token).attr({font: vertex.fs+"px "+sal.config.options.font,fill:sal.config.options.baseColor,"text-anchor":"middle","cursor":"pointer"});
+			}
+			if(document.selection && document.selection.empty) {
+				document.selection.empty();
+			}
+			else if(window.getSelection){
+				var sel = window.getSelection();
+				sel.removeAllRanges();
+			}
+			var pos = getMousePosition(e);
+			clone.x1 = nodeX1+pos.left-startPos.left;
+			clone.x2 = nodeX2+pos.left-startPos.left;
+			clone.y1 = nodeY1+pos.top-startPos.top;
+			clone.y2 = nodeY2+pos.top-startPos.top;
+			clone.attr({ x: (clone.x1 + clone.x2)/2, y: ( clone.y1 + clone.y2 )/2 });
+			if( mergeNode ){
+				clone.attr({ fill : sal.config.options.baseColor });
+				mergeNode.textNode.attr({ fill : sal.config.options.baseColor });
+			}
+			mergeNode = false;
+			acyclic = false;
+			var d = 0;
+			for( var i=0; i<sal.vertices.length; i++ ){
+				var v1 = clone;
+				var v2 = sal.vertices[i];
+				if( vertex != v2 && sal.overlap(v1.x1,v1.x2,v2.x1,v2.x2,v1.y1,v1.y2,v2.y1,v2.y2) ){
+					var x1 = (v1.x1+v1.x2)/2;
+					var x2 = (v2.x1+v2.x2)/2;
+					var y1 = (v1.y1+v1.y2)/2;
+					var y2 = (v2.y1+v2.y2)/2;
+					var dist = Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+					if( !mergeNode || mergeNode && dist < d ){
+						mergeNode = v2;
+						d = dist;
+					}
+				}
+			}
+			if( mergeNode ){
+				var color = null;
+				var g_test = sal.originGraph.clone();
+				acyclic = g_test.isAcyclicFromVertex(sal.originGraph.getVertex(mergeNode.index),sal.originGraph.getVertex(vertex.index));
+				acyclic ? color = "#90EE90" : color = "#FF8AA7";
+				clone.attr({ fill: color });
+				mergeNode.textNode.attr({ fill: color });
+			}
+		}
+	}
+	var createBranch = function(v,e){
+		var nv = new TRAVizVertex(sal.originGraph,sal.originGraph.config.getVertexIndex());
+		sal.originGraph.addVertex(nv);
+		for( var i=0; i<v.sources.length; i++ ){
+			if( v.sources[i].sourceId == e ){
+				nv.sources.push(v.sources[i]);
+				nv.token = v.sources[i].token;
+				v.sources.splice(i,1);
+				break;
+			}
+		}
+		v.count--;
+		var sp = sal.sentencePaths[e];
+		for( var i=0; i<sp.length; i++ ){
+			if( sp[i].index == v.index ){
+				sp[i] = nv;
+				break;
+			}
+		}
+		sal.reset();
+		sal.visualize();
+	}
 	var setTooltip = function(node,vertex,paper){
 		var attachedLinks = false;
 		node.connections = [];
@@ -8426,6 +8850,14 @@ TRAViz.prototype.visualize = function(){
 				$(sal.vertexConnections[i].node).remove();
 			}
 			sal.displayVertexConnections(node,vertex,paper);
+			if( vertex.transpositions ){
+				for( var i=0; i<vertex.transpositions.length; i++ ){
+					$(vertex.transpositions[i].node).css('display','block');
+				}
+				for( var i=0; i<vertex.transpositionGroup.length; i++ ){
+					$(vertex.transpositionGroup[i].rect.node).attr({"stroke":"#000", "stroke-width": 1, "opacity": "1.0"});
+				}
+			}
 		}
 		var hideConnections = function(){
 			for( var i=0; i<sal.vertexConnections.length; i++ ){
@@ -8434,6 +8866,14 @@ TRAViz.prototype.visualize = function(){
 			for( var i=0; i<sal.basicConnections.length; i++ ){
 				$(sal.basicConnections[i].node).css('display','block');
 			}
+			if( vertex.transpositions ){
+				for( var i=0; i<vertex.transpositions.length; i++ ){
+					$(vertex.transpositions[i].node).css('display','none');
+				}
+				for( var i=0; i<vertex.transpositionGroup.length; i++ ){
+					$(vertex.transpositionGroup[i].rect.node).attr({"stroke":"none"});
+				}
+			}
 		}
 		$(node).mouseenter(function(){
 			showConnections();
@@ -8441,10 +8881,20 @@ TRAViz.prototype.visualize = function(){
 		$(node).mouseleave(function(){
 			hideConnections();
 		});
+		if( sal.config.options.splitAndMerge ){
+			$(node).mousedown(function(evt){
+				dragNode(evt,node,vertex);
+			});
+		}
 		var tiptext = "<table>";
+		tiptext += "<tr><th style='padding:5px;text-align:right;'>edition</th><th style='padding:5px;text-align:right;'>token</th></tr>";
 		for( var i=0; i<vertex.sources.length; i++ ){
 			tiptext += "<tr>";
-			tiptext += "<td style='padding-top:5px;padding-bottom:5px;text-align:center;color:"+sal.colorMap[sal.editions[vertex.sources[i].sourceId]]+";'>"+sal.editions[vertex.sources[i].sourceId]+"</td>";
+			tiptext += "<td style='padding:5px;text-align:right;color:"+sal.colorMap[sal.editions[vertex.sources[i].sourceId]]+";'>"+sal.editions[vertex.sources[i].sourceId]+"</td>";
+			tiptext += "<td style='padding:5px;text-align:left;color:"+sal.colorMap[sal.editions[vertex.sources[i].sourceId]]+";'>"+vertex.sources[i].token+"</td>";
+			if( sal.config.options.splitAndMerge && vertex.sources.length > 1 ){
+				tiptext += "<td><div title='Remove token and create new branch!' name="+vertex.sources[i].sourceId+" class='unlink unlink"+vertex.index+"'/></td>";
+			}
 			tiptext += "</tr>";
 		}
 		tiptext += "</table>";
@@ -8485,6 +8935,17 @@ TRAViz.prototype.visualize = function(){
 					if( $(".qtip-content","[qtip='"+this.id+"']").height() > 200 ){
 						$(".qtip-content","[qtip='"+this.id+"']").css('height','200px');
 						$(".qtip-content","[qtip='"+this.id+"']").css('overflow','auto');
+					}
+					if( !attachedLinks ){
+						var links = $('.unlink'+vertex.index);
+						if( links.length > 0 ){
+							for( var i=0; i<links.length; i++ ){
+								$(links[i]).click(function(){
+									createBranch(vertex,$(this).attr('name'));
+								});
+							}
+							attachedLinks = true;
+						}
 					}
 				},
 				onHide: function(){
@@ -8773,14 +9234,17 @@ TRAViz.prototype.visualize = function(){
 		}			
 	}
 	r.setSize(w+"px",h+"px");
+	if( this.config.options.transpositions ){
+		this.calculateTranspositions();
+	}
 	for( var i=0; i<this.layout.length; i++ ){
 		var v = this.layout[i];
 		if( v != this.startVertex && v != this.endVertex && v.token != '' && this.config.options.vertexBackground ){
 			if( v.count > this.config.options.collapseLabels ){
-				v.rect = r.rect(v.x1+3,v.y1,v.x2-v.x1-6,v.y2-v.y1,5).attr({fill: this.config.options.vertexBackground, stroke: "none" });
+				v.rect = r.rect(v.x1+3,v.y1,v.x2-v.x1-6,v.y2-v.y1,5).attr({fill: this.config.options.vertexBackground, "stroke": "none" });
 			}
 			else {
-				v.rect = r.rect(v.x1+3,v.y1,v.x2-v.x1-6,v.y2-v.y1,5).attr({title: v.token, fill: this.config.options.vertexBackground, stroke: "none" });
+				v.rect = r.rect(v.x1+3,v.y1,v.x2-v.x1-6,v.y2-v.y1,5).attr({title: v.token, fill: this.config.options.vertexBackground, "stroke": "none" });
 			}
 		}
 		if( v.count > this.config.options.collapseLabels ){
@@ -8788,6 +9252,7 @@ TRAViz.prototype.visualize = function(){
 			if( this.config.options.interpolateFontSize ){
 				fs = this.config.options.fontSizeMin + (v.count-1)/(maxLabel-1) * (this.config.options.fontSizeMax - this.config.options.fontSizeMin);
 			}
+			v.fs = fs;
 			v.textNode = r.text(( v.x1 + v.x2 )/2, ( v.y1 + v.y2 )/2, v.token).attr({font: fs+"px "+this.config.options.font,fill:this.config.options.baseColor,"text-anchor":"middle","cursor":"pointer"});
 			setTooltip(v.textNode.node,v,r);
 			$(v.textNode.node).css({
@@ -8893,7 +9358,13 @@ function TRAVizConfig(options) {
 						// 'all' for displaying each individual stream, 
 						// 'joined' to merge all parallel connections, or 
 						// 'majority' to merge only if more than half of the edges are routed between the same vertices
-		majorityPercentage: 0.5 // an edge becomes a majority edge when the given percentage of editions passes it
+		majorityPercentage: 0.5, // an edge becomes a majority edge when the given percentage of editions passes it
+
+		editDistance: false, // false (or 0) if only exact matches between two words shall be merged or edit distance dependent on the word lengths computed with the formula 2*editDistance/(|word1|+|word2|)
+
+		splitAndMerge: true, // if the user is allowed to interactively split vertices or merge via drag&drop
+
+		transpositions: true, // if transpositions shall be determined and visualized on mouseover
 
 	};
 

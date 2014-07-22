@@ -90,6 +90,7 @@ TRAVizGraph.prototype.addVertex = function(v){
  */
 TRAVizGraph.prototype.clone = function(){
 	var cg = new TRAVizGraph();
+	cg.config = this.config;
 	for( var i=0; i<this.vertices.length; i++ ){
 		cg.addVertex(new TRAVizVertex(cg,this.vertices[i].index,this.vertices[i].token));
 	}
