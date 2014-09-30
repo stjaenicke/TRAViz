@@ -6468,35 +6468,35 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 			}
 		}
 	}
-	/*
-	for( var i=0; i<pairs.length; i++ ){
-		var w1 = pairs[i].pair.w1;
-		var w2 = pairs[i].pair.w2;
-		for( var j=0; j<wordMatches[w1.gid].length; j++ ){
-			if( wordMatches[w1.gid][j] == w2 ){
-				continue;
-			}
-			for( var k=0; k<wordMatches[w2.gid].length; k++ ){
-				if( wordMatches[w2.gid][k] == w1 ){
+	if( this.config.options.optimizeAlignment ){
+		for( var i=0; i<pairs.length; i++ ){
+			var w1 = pairs[i].pair.w1;
+			var w2 = pairs[i].pair.w2;
+			for( var j=0; j<wordMatches[w1.gid].length; j++ ){
+				if( wordMatches[w1.gid][j] == w2 ){
 					continue;
 				}
-				if( wordMatches[w1.gid][j] == wordMatches[w2.gid][k] ){
-					pairs[i].value++;
-				}
-			}				
+				for( var k=0; k<wordMatches[w2.gid].length; k++ ){
+					if( wordMatches[w2.gid][k] == w1 ){
+						continue;
+					}
+					if( wordMatches[w1.gid][j] == wordMatches[w2.gid][k] ){
+						pairs[i].value++;
+					}
+				}				
+			}
 		}
+		var sortBySize2 = function(p1,p2){
+			if( p1.value > p2.value ){
+				return -1;
+			}
+			if( p1.value == p2.value ){
+				return 0;
+			}
+			return 1;
+		}
+		pairs.sort(sortBySize2);
 	}
-	var sortBySize2 = function(p1,p2){
-		if( p1.value > p2.value ){
-			return -1;
-		}
-		if( p1.value == p2.value ){
-			return 0;
-		}
-		return 1;
-	}
-	pairs.sort(sortBySize2);
-	*/
 	for( var i=0; i<preferenceMerge.length; i++ ){
 		for( var j=0; j<preferenceMerge[i].vertices.length; j++ ){
 			preferenceMerge[i].vertices[j].token = preferenceMerge[i].tokens[j];
@@ -8942,7 +8942,7 @@ TRAViz.prototype.visualize = function(){
 						if( links.length > 0 ){
 							for( var i=0; i<links.length; i++ ){
 								$(links[i]).click(function(){
-									createBranch(vertex,$(this).attr('name'));
+									createBranch(sal.originGraph.getVertex(vertex.index),$(this).attr('name'));
 								});
 							}
 							attachedLinks = true;
@@ -9340,6 +9340,7 @@ function TRAVizConfig(options) {
 		lineBreaks: true, // if line breaks are allowed or not (if true, only the width of the given div is used)		
 		rtl: false, // if labels should be drawn from right to left (for arabic, hebrew)
 		popupLabel: "occurrences", // header label to be shown in the popup window
+		optimizedAlignment: true, // computes a better alignment at the expense of runtime
 
 		/* Text Vertices */		
 		baseColor: '#3E576F', // color used for text and joined connections		

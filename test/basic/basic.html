@@ -9,23 +9,18 @@
     <div id="containerDiv"></div>
     <script type="text/javascript">
 	var traviz = new TRAViz("containerDiv",{
-		lineBreaks: false
+		lineBreaks: false,
+		optimizeAlignment: false
 	});
 	traviz.align([{
 		edition: 'Edition 1',
-		text: 'Thank You very much for thinking about using this library'
+		text: 'the white dog chases a brown cat'
 	},{
 		edition: 'Edition 2',
-		text: 'I thank You for downloading this library'
+		text: 'a brown cat chases the white dog'
 	},{
 		edition: 'Edition 3',
-		text: 'Thank You a lot for using this library'
-	},{
-		edition: 'Edition 4',
-		text: 'Thanks a lot for watching this example'
-	},{
-		edition: 'Edition 5',
-		text: 'Thanks for downloading and thinking about using this library'
+		text: 'a brown cat chases the black dog'
 	}]);
 	traviz.visualize();
     </script>

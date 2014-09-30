@@ -182,35 +182,35 @@ TRAVizAligner.prototype.alignSentences = function(sentences){
 			}
 		}
 	}
-	/*
-	for( var i=0; i<pairs.length; i++ ){
-		var w1 = pairs[i].pair.w1;
-		var w2 = pairs[i].pair.w2;
-		for( var j=0; j<wordMatches[w1.gid].length; j++ ){
-			if( wordMatches[w1.gid][j] == w2 ){
-				continue;
-			}
-			for( var k=0; k<wordMatches[w2.gid].length; k++ ){
-				if( wordMatches[w2.gid][k] == w1 ){
+	if( this.config.options.optimizeAlignment ){
+		for( var i=0; i<pairs.length; i++ ){
+			var w1 = pairs[i].pair.w1;
+			var w2 = pairs[i].pair.w2;
+			for( var j=0; j<wordMatches[w1.gid].length; j++ ){
+				if( wordMatches[w1.gid][j] == w2 ){
 					continue;
 				}
-				if( wordMatches[w1.gid][j] == wordMatches[w2.gid][k] ){
-					pairs[i].value++;
-				}
-			}				
+				for( var k=0; k<wordMatches[w2.gid].length; k++ ){
+					if( wordMatches[w2.gid][k] == w1 ){
+						continue;
+					}
+					if( wordMatches[w1.gid][j] == wordMatches[w2.gid][k] ){
+						pairs[i].value++;
+					}
+				}				
+			}
 		}
+		var sortBySize2 = function(p1,p2){
+			if( p1.value > p2.value ){
+				return -1;
+			}
+			if( p1.value == p2.value ){
+				return 0;
+			}
+			return 1;
+		}
+		pairs.sort(sortBySize2);
 	}
-	var sortBySize2 = function(p1,p2){
-		if( p1.value > p2.value ){
-			return -1;
-		}
-		if( p1.value == p2.value ){
-			return 0;
-		}
-		return 1;
-	}
-	pairs.sort(sortBySize2);
-	*/
 	for( var i=0; i<preferenceMerge.length; i++ ){
 		for( var j=0; j<preferenceMerge[i].vertices.length; j++ ){
 			preferenceMerge[i].vertices[j].token = preferenceMerge[i].tokens[j];

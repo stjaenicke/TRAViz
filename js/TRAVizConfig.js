@@ -55,6 +55,7 @@ function TRAVizConfig(options) {
 		lineBreaks: true, // if line breaks are allowed or not (if true, only the width of the given div is used)		
 		rtl: false, // if labels should be drawn from right to left (for arabic, hebrew)
 		popupLabel: "occurrences", // header label to be shown in the popup window
+		optimizedAlignment: true, // computes a better alignment at the expense of runtime
 
 		/* Text Vertices */		
 		baseColor: '#3E576F', // color used for text and joined connections		

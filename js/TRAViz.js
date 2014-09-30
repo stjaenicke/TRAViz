@@ -2134,7 +2134,7 @@ TRAViz.prototype.visualize = function(){
 						if( links.length > 0 ){
 							for( var i=0; i<links.length; i++ ){
 								$(links[i]).click(function(){
-									createBranch(vertex,$(this).attr('name'));
+									createBranch(sal.originGraph.getVertex(vertex.index),$(this).attr('name'));
 								});
 							}
 							attachedLinks = true;
