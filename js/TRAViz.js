@@ -254,8 +254,6 @@ TRAViz.prototype.prepareConnections = function(){
 			if( v.token == '' && v2.token == '' && !v2.linebreak && v2 != this.endVertex ){
 				continue;
 			}
-			var y1o = (v1.y1+v1.y2)/2;
-			var y2o = (v2.y1+v2.y2)/2;
 			if( v1.layer == v2.layer ){
 				var overlaps = false;
 				for( var k=0; k<this.vertices.length; k++ ){
@@ -2415,9 +2413,36 @@ TRAViz.prototype.visualize = function(){
 		return 1;
 	}
 	this.layers.sort(sortLayers);
+	var lastLevel = 0;
+	for( var i=0; i<this.layers.length; i++ ){
+		if( this.layers[i].vertices.length > 0 ){
+			this.layers[i].level = this.layers[i].vertices[0].level;
+			lastLevel = this.layers[i].level;
+		}
+		else {
+			this.layers[i].level = lastLevel;
+		}
+	}
 	this.setConnections();
 	this.removeOverlaps();
 	this.transformEdgeTypes();
+	if( this.config.options.lineBreaks && this.config.options.lineNumbering ){
+		for( var i=0; i<this.layout.length; i++ ){
+			var v = this.layout[i];
+			v.y1 += (v.level+1)*26;
+			v.y2 += (v.level+1)*26;
+		}
+		for( var i=0; i<this.connections.length; i++ ){
+			var v = this.connections[i].v1;
+			for( var j=0; j<this.connections[i].links.length; j++ ){
+				this.connections[i].links[j].y1 += (v.level+1)*26;
+				this.connections[i].links[j].y2 += (v.level+1)*26;
+			}			
+		}
+		for( var i=0; i<this.layers.length; i++ ){
+			this.layers[i].yLevel += (this.layers[i].level+1)*26;
+		}
+	}
 	var nXs = false;
 	for( var i=0; i<this.startVertex.successors.length; i++ ){
 		var suc = this.graph.getVertex(this.startVertex.successors[i]);
@@ -2493,6 +2518,9 @@ TRAViz.prototype.visualize = function(){
 	y_max += 3*this.curveRadius + 40;
 	x_min -= 3*this.curveRadius;
 	x_max += 3*this.curveRadius;
+	if( this.config.options.lineBreaks && this.config.options.lineNumbering ){
+		y_min -= 26;
+	}
 	var w = x_max - x_min;
 	var h = y_max - y_min;
 	if( this.config.options.lineBreaks ){
@@ -2519,15 +2547,7 @@ TRAViz.prototype.visualize = function(){
 		}			
 	}
 	r.setSize(w+"px",h+"px");
-	var lastLevel = 0;
 	for( var i=0; i<this.layers.length; i++ ){
-		if( this.layers[i].vertices.length > 0 ){
-			this.layers[i].level = this.layers[i].vertices[0].level;
-			lastLevel = this.layers[i].level;
-		}
-		else {
-			this.layers[i].level = lastLevel;
-		}
 		this.layers[i].yLevel -= y_min;
 	}
 	if( this.config.options.transpositions ){
