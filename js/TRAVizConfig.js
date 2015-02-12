@@ -51,8 +51,10 @@ function TRAVizConfig(options) {
 		/* General */
 		colors: [ "red", "blue", "green", "rgb(230,230,0)", "orange",
                       "#996600", "purple", "#FF00FF", "#66FFFF", "#339999" ], // colors used to identify the various edition flows		
-		normalize: true, // if the sentences shall be normalized or not (remove special characters)		
-		lineBreaks: true, // if line breaks are allowed or not (if true, only the width of the given div is used)		
+		normalize: true, // if the sentences shall be normalized or not (remove special characters)
+		lineBreaks: true, // if line breaks are allowed or not (if true, only the width of the given div is used)
+		lineNumbering: true, // if line numbers are shown when lineBreaks are used
+		lineNumberingText: "Line ", // text of line numbers
 		rtl: false, // if labels should be drawn from right to left (for arabic, hebrew)
 		popupLabel: "occurrences", // header label to be shown in the popup window
 		optimizedAlignment: true, // computes a better alignment at the expense of runtime

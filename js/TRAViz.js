@@ -1060,6 +1060,32 @@ TRAViz.prototype.highlightEdition = function(id){
 }
 
 /**
+ * Displays a line numbering when line breaks are used
+ */
+TRAViz.prototype.insertLineNumbering = function(width,gap){
+	var line = 1;
+	var x1 = this.curveRadius;
+	var x2 = width - this.curveRadius;
+	var y = this.layers[0].yLevel - this.layers[0].height/2 + 0.5 - Math.floor(gap/2);
+	var path = "M "+x1+" "+y+" L "+x2+" "+y;
+	this.paper.path(path).attr({stroke: this.config.options.baseColor, "stroke-width": 1, "stroke-linecap": "round", "opacity": "1.0"});
+	this.paper.text(x1+7, y+14, this.config.options.lineNumberingText+" "+line).attr({font: "14px "+this.config.options.font,fill:this.config.options.baseColor,"text-anchor":"start","cursor":"default"});
+	line++;
+	for( var i=0; i<this.layers.length-1; i++ ){
+		if( this.layers[i].level != this.layers[i+1].level ){
+			var y = this.layers[i].yLevel + this.layers[i].height/2 + 0.5 + Math.floor(gap/2);
+			var path = "M "+x1+" "+y+" L "+x2+" "+y;
+			this.paper.path(path).attr({stroke: this.config.options.baseColor, "stroke-width": 1, "stroke-linecap": "round", "opacity": "1.0"});
+			this.paper.text(x1+7, y+14, this.config.options.lineNumberingText+" "+line).attr({font: "14px "+this.config.options.font,fill:this.config.options.baseColor,"text-anchor":"start","cursor":"default"});
+			line++;
+		}
+	}
+	var y = this.layers[this.layers.length-1].yLevel + this.layers[this.layers.length-1].height/2 + 0.5 + Math.floor(gap/2);
+	var path = "M "+x1+" "+y+" L "+x2+" "+y;
+	this.paper.path(path).attr({stroke: this.config.options.baseColor, "stroke-width": 1, "stroke-linecap": "round", "opacity": "1.0"});
+}
+
+/**
  * Computes the path of the given <connection> with the given vertical shifts <s1> at the source vertex and <s2> at the sink vertex
  */
 TRAViz.prototype.generatePath = function(connection,s1,s2){
@@ -2427,6 +2453,17 @@ TRAViz.prototype.visualize = function(){
 		}			
 	}
 	r.setSize(w+"px",h+"px");
+	var lastLevel = 0;
+	for( var i=0; i<this.layers.length; i++ ){
+		if( this.layers[i].vertices.length > 0 ){
+			this.layers[i].level = this.layers[i].vertices[0].level;
+			lastLevel = this.layers[i].level;
+		}
+		else {
+			this.layers[i].level = lastLevel;
+		}
+		this.layers[i].yLevel -= y_min;
+	}
 	if( this.config.options.transpositions ){
 		this.calculateTranspositions();
 	}
@@ -2472,6 +2509,9 @@ TRAViz.prototype.visualize = function(){
 	if( this.config.options.startAndEnd ){
 		r.circle(this.startVertex.x1,this.startVertex.y1,4).attr({ fill: this.config.options.baseColor });
 		r.rect(this.endVertex.x1,this.endVertex.y1-4,8,8).attr({ fill: this.config.options.baseColor });
+	}
+	if( this.config.options.lineBreaks && this.config.options.lineNumbering ){
+		this.insertLineNumbering(w,gap);
 	}
 	$("<a class='TRAViz-copyright-link' target=_blank href='http://traviz.vizcovery.org'><div class='TRAViz-copyright'></div></a>").appendTo($('#'+this.div));
 }
