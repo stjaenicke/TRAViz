@@ -58,6 +58,7 @@ function TRAVizConfig(options) {
 		rtl: false, // if labels should be drawn from right to left (for arabic, hebrew)
 		popupLabel: "occurrences", // header label to be shown in the popup window
 		optimizedAlignment: true, // computes a better alignment at the expense of runtime
+		editionLabels: true, // if edition labels are shown in a popup when hovering edges
 
 		/* Text Vertices */		
 		baseColor: '#3E576F', // color used for text and joined connections		

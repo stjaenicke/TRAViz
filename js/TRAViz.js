@@ -315,6 +315,70 @@ TRAViz.prototype.prepareConnections = function(){
 }
 
 /**
+ * Adds the given edge <e={h,t}> to its corresponding group
+ */
+TRAViz.prototype.addEdgeToGroup = function(h,t,e,ids){
+	var found = false;
+	for( var i=0; i<this.edgeGroups.length; i++ ){
+		var g = this.edgeGroups[i];
+		if( g.h == h && g.t == t ){
+			g.edges.push(e);
+			g.ids = g.ids.concat(ids);
+			found = true;
+			break;
+		}
+	}
+	if( !found ){
+		this.edgeGroups.push({
+			h: h,
+			t: t,
+			edges: [e],
+			ids: ids
+		});
+	}
+}
+
+/**
+ * Adds the given edge <e={h,t}> to its corresponding group
+ */
+TRAViz.prototype.computeEdgeLabels = function(){
+	for( var i=0; i<this.edgeGroups.length; i++ ){
+		var g = this.edgeGroups[i];
+		var tiptext = "";
+		for( var j=0; j<g.ids.length; j++ ){
+			tiptext += "<div style='text-align:center;color:"+this.colorMap[this.editions[g.ids[j]]]+";'>"+this.editions[g.ids[j]]+"</div>";
+		}
+		for( var j=0; j<g.edges.length; j++ ){
+			$(g.edges[j].node).qtip({
+				content: {	
+					text: tiptext
+				},
+				style: {
+					tip: true,
+					border: { width: 0, radius: 4 },
+					width : { min: 100, max: 500 }
+				},
+				position: {
+					target: 'mouse',
+					corner: {
+						tooltip: "bottomMiddle",
+						target: "topMiddle"
+					},
+					adjust : { x: -6 }
+				},
+				show: {
+					when: 'mouseenter', 
+					solo: true
+				},
+				hide: {
+					when: { event: 'mouseleave' }
+				}
+			});
+		}
+	}
+};
+
+/**
  * Draws joined connections
  */
 TRAViz.prototype.generalConnections = function(){		
@@ -1422,6 +1486,7 @@ TRAViz.prototype.majorityConnections = function(majority){
 				path = this.generatePath(c,getShift(-1,e.head.outs),getShift(-1,e.tail.ins));
 			}
 			var pvis = this.paper.path(path).attr({stroke: this.config.options.baseColor, "stroke-width": 5, "stroke-linecap": "round", "opacity": "0.8"});
+			this.addEdgeToGroup(e.head,e.tail,pvis,e.ids);
 			this.basicConnections.push(pvis);
 		}
 		else {
@@ -1434,6 +1499,7 @@ TRAViz.prototype.majorityConnections = function(majority){
 					path = this.generatePath(c,getShift(e.ids[j],e.head.outs),getShift(e.ids[j],e.tail.ins));
 				}
 				var pvis = this.paper.path(path).attr({stroke: this.colorMap[this.editions[e.ids[j]]], "stroke-width": 3, "stroke-linecap": "round", "opacity": "0.8"});
+				this.addEdgeToGroup(e.head,e.tail,pvis,[e.ids[j]]);
 				this.basicConnections.push(pvis);
 			}
 		}
@@ -2495,6 +2561,7 @@ TRAViz.prototype.visualize = function(){
 			});
 		}
 	}
+	this.edgeGroups = [];
 	this.basicConnections = [];
 	this.vertexConnections = [];
 	if( this.config.options.connectionType == 'majority' ){
@@ -2505,6 +2572,9 @@ TRAViz.prototype.visualize = function(){
 	}
 	else {
 		this.generalConnections();
+	}
+	if( this.config.options.editionLabels ){
+		this.computeEdgeLabels();
 	}
 	if( this.config.options.startAndEnd ){
 		r.circle(this.startVertex.x1,this.startVertex.y1,4).attr({ fill: this.config.options.baseColor });
