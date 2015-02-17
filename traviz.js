@@ -6889,21 +6889,35 @@ TRAViz.prototype.align = function(sources){
 	this.vertices = this.aligner.graph.vertices;
 	for( var i=0; i<this.vertices.length; i++ ){
 		var v = this.vertices[i];
-		var tokenHash = [];
-		var token = "", count = 0;
+		var tl = "";
+		var c = 0;
+		var tokenNameHash = [];
 		for( var j=0; j<v.sources.length; j++ ){
-			if( typeof tokenHash[v.sources[j].token] == "undefined" ){
-				tokenHash[v.sources[j].token] = 1;
+			var token = v.sources[j].token;
+			var found = false;
+			for( var k=0; k<tokenNameHash.length; k++ ){
+				if( tokenNameHash[k].t == token ){
+					tokenNameHash[k].c++;
+					found = true;
+					if( tokenNameHash[k].c > c ){
+						tl = token;
+						c = tokenNameHash[k].c;
+					}
+					break;
+				}
 			}
-			else {
-				tokenHash[v.sources[j].token]++;
-			}
-			if( tokenHash[v.sources[j].token] > count ){
-				token = v.sources[j].token;
-				count = tokenHash[v.sources[j].token];
+			if( !found ){
+				tokenNameHash.push({
+					t: token,
+					c: 1
+				});
+				if( c == 0 ){
+					tl = token;
+					c = 1;
+				}
 			}
 		}
-		v.token = token;
+		v.token = tl;
 	}
 	this.originGraph = this.graph.clone();
 	this.originSentencePaths = [];
@@ -6954,21 +6968,35 @@ TRAViz.prototype.reset = function(v){
 		var v = this.vertices[i];
 		v.layer = undefined;
 		v.originLayer = undefined;
-		var tokenHash = [];
-		var token = "", count = 0;
+		var tl = "";
+		var c = 0;
+		var tokenNameHash = [];
 		for( var j=0; j<v.sources.length; j++ ){
-			if( typeof tokenHash[v.sources[j].token] == "undefined" ){
-				tokenHash[v.sources[j].token] = 1;
+			var token = v.sources[j].token;
+			var found = false;
+			for( var k=0; k<tokenNameHash.length; k++ ){
+				if( tokenNameHash[k].t == token ){
+					tokenNameHash[k].c++;
+					found = true;
+					if( tokenNameHash[k].c > c ){
+						tl = token;
+						c = tokenNameHash[k].c;
+					}
+					break;
+				}
 			}
-			else {
-				tokenHash[v.sources[j].token]++;
-			}
-			if( tokenHash[v.sources[j].token] > count ){
-				token = v.sources[j].token;
-				count = tokenHash[v.sources[j].token];
+			if( !found ){
+				tokenNameHash.push({
+					t: token,
+					c: 1
+				});
+				if( c == 0 ){
+					tl = token;
+					c = 1;
+				}
 			}
 		}
-		v.token = token;
+		v.token = tl;
 	}
 }
 
@@ -8619,6 +8647,7 @@ TRAViz.prototype.insertDummys = function(){
 TRAViz.prototype.setMainBranch = function(id){
 	if( this.mainBranch != id ){
 		this.mainBranch = id;
+		this.reset();
 		this.visualize();
 	}
 };
