@@ -122,6 +122,69 @@ TRAViz.prototype.align = function(sources){
 }
 
 /**
+ * triggers the alignment of the given <sources> that evolves the Text Variant Graph
+ */
+TRAViz.prototype.loadGraphML = function(xml){
+	this.editions = [];
+	this.sentences = [];
+	this.colorMap = [];
+	var colors = this.config.getColors(sources.length);
+	for( var i=0; i<sources.length; i++ ){
+		this.editions.push(sources[i].edition);
+		this.sentences.push(sources[i].text);
+		this.colorMap[sources[i].edition] = colors[i];
+	}
+	this.mainBranch = this.editions[0];
+	this.aligner = new TRAVizAligner(this.graph,this.config);
+	this.sentencePaths = this.aligner.alignSentences(this.sentences);
+	this.sentencePathHash = [];
+	for( var i=0; i<this.editions.length; i++ ){
+		this.sentencePathHash[this.editions[i]] = this.sentencePaths[i];
+	}
+	this.vertices = this.aligner.graph.vertices;
+	for( var i=0; i<this.vertices.length; i++ ){
+		var v = this.vertices[i];
+		var tl = "";
+		var c = 0;
+		var tokenNameHash = [];
+		for( var j=0; j<v.sources.length; j++ ){
+			var token = v.sources[j].token;
+			var found = false;
+			for( var k=0; k<tokenNameHash.length; k++ ){
+				if( tokenNameHash[k].t == token ){
+					tokenNameHash[k].c++;
+					found = true;
+					if( tokenNameHash[k].c > c ){
+						tl = token;
+						c = tokenNameHash[k].c;
+					}
+					break;
+				}
+			}
+			if( !found ){
+				tokenNameHash.push({
+					t: token,
+					c: 1
+				});
+				if( c == 0 ){
+					tl = token;
+					c = 1;
+				}
+			}
+		}
+		v.token = tl;
+	}
+	this.originGraph = this.graph.clone();
+	this.originSentencePaths = [];
+	for( var i=0; i<this.sentencePaths.length; i++ ){
+		this.originSentencePaths.push([]);
+		for( var j=0; j<this.sentencePaths[i].length; j++ ){
+			this.originSentencePaths.push(this.sentencePaths[i][j]);
+		}
+	}
+}
+
+/**
  * updates all sentence paths after merge or split operations
  */
 TRAViz.prototype.reset = function(v){
@@ -1361,6 +1424,7 @@ TRAViz.prototype.displayVertexConnections = function(node,vertex){
 					}
 				}
 				var pvis = this.paper.path(path).attr({stroke: this.colorMap[this.editions[i]], "stroke-width": 3, "stroke-linecap": "round", "opacity": "0.8"});
+				pvis.node.setAttribute("class","edition"+i+"-edgestyle");
 				this.vertexConnections.push(pvis);
 				break;
 			}
@@ -1512,6 +1576,7 @@ TRAViz.prototype.majorityConnections = function(majority){
 				path = this.generatePath(c,getShift(-1,e.head.outs),getShift(-1,e.tail.ins));
 			}
 			var pvis = this.paper.path(path).attr({stroke: this.config.options.baseColor, "stroke-width": 5, "stroke-linecap": "round", "opacity": "0.8"});
+			pvis.node.setAttribute("class","majority-edgestyle");
 			this.addEdgeToGroup(e.head,e.tail,pvis,e.ids);
 			this.basicConnections.push(pvis);
 		}
@@ -1525,6 +1590,7 @@ TRAViz.prototype.majorityConnections = function(majority){
 					path = this.generatePath(c,getShift(e.ids[j],e.head.outs),getShift(e.ids[j],e.tail.ins));
 				}
 				var pvis = this.paper.path(path).attr({stroke: this.colorMap[this.editions[e.ids[j]]], "stroke-width": 3, "stroke-linecap": "round", "opacity": "0.8"});
+				pvis.node.setAttribute("class","edition"+e.ids[j]+"-edgestyle");
 				this.addEdgeToGroup(e.head,e.tail,pvis,[e.ids[j]]);
 				this.basicConnections.push(pvis);
 			}
