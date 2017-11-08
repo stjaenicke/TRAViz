@@ -111,7 +111,7 @@ var BibleViz = new function(){
 		$(this.alignment).empty();
 		var width = $(this.alignment).width();
 		var visHeight = 0;
-		for( var i=0; i<bibleVerses.length-1; i++ ){
+		for( var i=0; i<bibleVerses.length; i++ ){
 			var list = [];
 			var sids = [];
 			var vi = 0;
